@@ -61,7 +61,6 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id$
  */
 
 #ifndef	_NETINET_IP_PROXY_H__

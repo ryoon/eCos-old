@@ -62,7 +62,6 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id$
  */
 
 #ifndef	_NETINET_IP_COMPAT_H__

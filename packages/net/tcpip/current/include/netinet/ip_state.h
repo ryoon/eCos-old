@@ -62,7 +62,6 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id$
  */
 
 #ifndef	_NETINET_IP_STATE_H__
