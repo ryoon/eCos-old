@@ -1,0 +1,289 @@
+# ====================================================================
+#
+#      io_flash.cdl
+#
+#      eCos IO configuration data
+#
+# ====================================================================
+#####ECOSGPLCOPYRIGHTBEGIN####
+## -------------------------------------------
+## This file is part of eCos, the Embedded Configurable Operating System.
+## Copyright (C) 2004 eCosCentric Ltd
+## Copyright (C) 2004 Andrew Lunn
+## Copyright (C) 2003 Gary Thomas
+## Copyright (C) 1998, 1999, 2000, 2001, 2002 Red Hat, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free
+## Software Foundation; either version 2 or (at your option) any later version.
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License along
+## with eCos; if not, write to the Free Software Foundation, Inc.,
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+##
+## As a special exception, if other files instantiate templates or use macros
+## or inline functions from this file, or you compile this file and link it
+## with other works to produce a work based on this file, this file does not
+## by itself cause the resulting work to be covered by the GNU General Public
+## License. However the source code for this file must still be made available
+## in accordance with section (3) of the GNU General Public License.
+##
+## This exception does not invalidate any other reasons why a work based on
+## this file might be covered by the GNU General Public License.
+##
+## Alternative licenses for eCos may be arranged by contacting Red Hat, Inc.
+## at http://sources.redhat.com/ecos/ecos-license/
+## -------------------------------------------
+#####ECOSGPLCOPYRIGHTEND####
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      gthomas
+# Original data:  gthomas
+# Contributors:   woehler, bartv
+# Date:           2000-07-06
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_IO_FLASH {
+    display         "FLASH device drivers"
+    include_dir     cyg/io
+    doc             ref/flash.html
+    description     "
+        This package provides support for the flash devices on the
+        current platform."
+    requires    CYGPKG_ISOINFRA
+    requires    CYGINT_ISO_STRING_STRFUNCS
+
+    compile     flash.c
+ 
+    cdl_interface CYGHWR_IO_FLASH_DEVICE {
+        display     "Hardware FLASH device drivers"
+	requires    { CYGHWR_IO_FLASH_DEVICE >= 1 }
+        description "
+            This calculated option gives the number of flash devices
+            on the current platform. The generic flash support requires
+            at least one device."
+    }
+
+    cdl_interface CYGHWR_IO_FLASH_BLOCK_LOCKING {
+        display     "Hardware can support block locking"
+        flavor      booldata
+        description "
+            This option will be enabled by devices which can support
+            locking (write-protection) of individual flash blocks. If
+            none of the devices support locking then the relevant code
+            in the generic flash package can be eliminated."
+    }
+
+    cdl_interface CYGHWR_IO_FLASH_INDIRECT_READS {
+	display	    "Hardware requires indirect reads"
+	flavor	    booldata
+	description "
+            Some flash devices can be read directly like any other
+            memory. Others can only be accessed indirectly, which
+            involves extra code. If none of the flash devices on the
+            target hardware use indirect reads then the extra code
+            can be eliminated."
+    }
+    
+    cdl_interface CYGHWR_IO_FLASH_DEVICE_LEGACY {
+        display     "Hardware driver uses the legacy interface"
+        flavor      booldata
+        compile     -library=libextras.a legacy_dev.c
+        description "
+            The generic flash code can work with either a legacy device
+            driver or with V2 drivers. If a legacy driver is used on the
+            current platform then this option will be implemented."
+	requires    { CYGHWR_IO_FLASH_DEVICE_LEGACY <= 1 }
+    }
+
+    cdl_option CYGSEM_IO_FLASH_READ_INDIRECT {
+	display         "Legacy device driver uses indirect reads."
+	active_if       CYGHWR_IO_FLASH_DEVICE_LEGACY
+        flavor          bool
+        default_value   0
+        requires        { !CYGSEM_IO_FLASH_VERIFY_PROGRAM }
+        description     "
+            This option will be asserted by devices which cannot support
+            direct access to the FLASH memory contents (e.g. EEPROM or NAND
+            devices).  In these cases, the driver must provide an appropriate
+            hardware access function."
+    }
+
+    cdl_option CYGSEM_IO_FLASH_CHATTER {
+        display         "Display status messages during flash operations"
+        flavor          bool
+        default_value   1
+        description     "
+           Selecting this option will cause the flash code to print status
+           messages as various flash operations are undertaken."
+    }
+
+    cdl_option CYGSEM_IO_FLASH_VERIFY_PROGRAM {
+        display         "Verify data programmed to flash"
+        flavor          bool
+        default_value   1
+	active_if	{ CYGHWR_IO_FLASH_INDIRECT_READS < CYGHWR_IO_FLASH_DEVICE }
+        description     "
+           Selecting this option will cause verification of data
+           programmed to flash."
+    }
+
+    cdl_option CYGSEM_IO_FLASH_SOFT_WRITE_PROTECT {
+        display          "Platform has flash soft DIP switch write-protect"
+        flavor           bool
+        default_value    0
+        description      "
+           Selecting this option will cause the state of a hardware jumper or
+           dipswitch to be read by software to determine whether the flash is
+           write-protected or not."
+    }
+
+    cdl_option CYGSEM_IO_FLASH_LEGACY_API {
+        display          "Provide the legacy user API"
+        flavor           bool
+        default_value    1
+        compile          legacy_api.c
+        description      "
+            Provide an implementation of the lagacy user API. This is mapped 
+            onto the new API via a small layer of code"
+    }
+        
+    cdl_component CYGPKG_IO_FLASH_BLOCK_DEVICE {
+        display         "Provide /dev block devices"
+        flavor          bool
+        active_if       CYGPKG_IO
+        default_value   0
+        compile         -library=libextras.a flashiodev.c
+        description     "
+            Provide one or more block devices below /dev which can be
+            accessed using standard I/O functions such as eCos cyg_io_read()
+            and POSIX open()."
+
+	for { set ::dev 1 } { $::dev <= 2 } { incr ::dev } {
+	    
+	    cdl_component CYGPKG_IO_FLASH_BLOCK_DEVICE_$::dev {
+		display       "Provide block device $::dev"
+		if { 1 == $::dev } {
+		    default_value 1
+		} else {
+		    default_value 0
+		}
+		description "Provide block device $::dev for use with standard I/O"
+
+		cdl_option CYGDAT_IO_FLASH_BLOCK_DEVICE_NAME_$::dev {
+		    display       "Name of flash block device $::dev"
+		    flavor        data
+		    default_value "\"\\\"/dev/flash$::dev\\\"\""
+		    description "
+                        This option determines the name by which the block
+                        device can be accessed."
+		}
+		
+		cdl_interface CYGINT_IO_FLASH_BLOCK_CFG_$::dev {
+		    requires 1 == CYGINT_IO_FLASH_BLOCK_CFG_$::dev
+		    no_define
+		}
+
+		cdl_component CYGNUM_IO_FLASH_BLOCK_CFG_STATIC_$::dev {
+		    display         "Static configuration via offset"
+		    default_value   1
+		    implements      CYGINT_IO_FLASH_BLOCK_CFG_$::dev
+		    description     "
+                        This configures the flash block device $::dev
+                        with static offset from the base of the first
+                        flash device and length"
+		    
+		    cdl_option CYGNUM_IO_FLASH_BLOCK_OFFSET_$::dev {
+			display         "Start offset from flash base"
+			flavor          data
+			default_value   0xFFFFFFFF
+			requires        0xFFFFFFFF != CYGNUM_IO_FLASH_BLOCK_OFFSET_$::dev
+			description     "
+                            This gives the offset from the base of flash 
+                            of the first flash device which this block device 
+                            corresponds to."
+		    }
+		    cdl_option CYGNUM_IO_FLASH_BLOCK_LENGTH_$::dev {
+			display         "Length"
+			flavor          data
+			default_value   0
+			requires        0 != CYGNUM_IO_FLASH_BLOCK_OFFSET_$::dev
+			description     "
+                            This gives the length of the region of flash given over
+                            to this block device."
+		    }
+		}
+		
+		cdl_component CYGNUM_IO_FLASH_BLOCK_CFG_STATIC_ABSOLUTE_$::dev {
+		    display         "Static configuration via absolute address"
+		    default_value   0
+		    implements      CYGINT_IO_FLASH_BLOCK_CFG_$::dev
+		    description     "
+                        This configures the flash block device $::dev
+                        with absolute base address and a length"
+		    
+		    cdl_option CYGNUM_IO_FLASH_BLOCK_ABSOLUTE_START_$::dev {
+			display         "Start offset from flash base"
+			flavor          data
+			default_value   0xFFFFFFFF
+			requires        0xFFFFFFFF != CYGNUM_IO_FLASH_BLOCK_ABSOLUTE_START_$::dev
+			description     "
+                            This gives the absolute address in flash which this
+                            block device corresponds to."
+		    }
+		    cdl_option CYGNUM_IO_FLASH_BLOCK_ABSOLUTE_LENGTH_$::dev {
+			display         "Length"
+			flavor          data
+			default_value   0
+			requires	0 != CYGNUM_IO_FLASH_BLOCK_ABSOLUTE_LENGTH_$::dev
+			description     "
+                            This gives the length of the region of flash given over
+                            to this block device."
+		    }
+		}
+		
+		cdl_component CYGNUM_IO_FLASH_BLOCK_CFG_FIS_$::dev {
+		    display         "Configuration from FIS"
+		    default_value   0
+		    implements      CYGINT_IO_FLASH_BLOCK_CFG_$::dev
+		    description     "
+                          This configures the flash block device $::dev
+                          from Redboot FIS"
+		    
+		    cdl_component CYGDAT_IO_FLASH_BLOCK_FIS_NAME_$::dev {
+			display     "Name of FIS entry"
+			flavor      data
+			requires    "\"\"" != CYGDAT_IO_FLASH_BLOCK_FIS_NAME_$::dev
+			if { 1 == $::dev } {
+			    default_value { "\"jffs2\"" }
+			} elseif { 2 == $::dev } {
+			    default_value { "\"jffs2-2\"" }
+			} else {
+			    default_value { "\"\"" }
+			}
+		    }
+		}
+            }
+	}
+    }
+
+    # FIXME: remove in next release
+    cdl_interface CYGHWR_IO_FLASH_DEVICE_NOT_IN_RAM {
+        display       "Hardware FLASH device drivers are not in RAM"
+        flavor        booldata
+        description   "
+            Use of this interface is deprecated.
+            Drivers should make sure that the functions are
+            linked to RAM by putting them in .2ram sections."
+            requires !CYGHWR_IO_FLASH_DEVICE_NOT_IN_RAM
+    }
+}
