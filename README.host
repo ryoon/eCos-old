@@ -4,7 +4,7 @@
 This README file only describes the eCos host-side software. For
 details of the eCos target-side software or the required toolchains,
 please see other documentation. A good starting point is
-http://sourceware.com/ecos
+http://ecos.sourceware.org/
 		
 There are two categories of host-side software. The host subdirectory
 contains generic software, primarily related to the eCos configuration
