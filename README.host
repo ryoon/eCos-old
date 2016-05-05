@@ -333,12 +333,12 @@ in the normal fashion:
 More Information
 ================
 
-Please see the eCos web site, http://sourceware.com/ecos/, for
+Please see the eCos web site, http://ecos.sourceware.org/, for
 further details. This includes the FAQ, a form for reporting problems,
 and details of the various mailing lists
-(http://sources.redhat.com/ecos/intouch.html) At the time of writing
+(http://ecos.sourceware.org/intouch.html) At the time of writing
 there are no separate mailing lists for the eCos host-side sources,
-the main mailing list ecos-discuss@sourceware.com should be used
+the main mailing list ecos-discuss@ecos.sourceware.org should be used
 instead.
 
 // ####ECOSDOCCOPYRIGHTBEGIN####                                            
