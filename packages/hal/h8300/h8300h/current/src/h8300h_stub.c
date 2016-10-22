@@ -270,11 +270,11 @@ static unsigned short *getnextpc(unsigned short *pc)
 		    return (unsigned short *)addr;
 		case relb:
 		    if ((inst = 0x55) || isbranch(inst & 0x0f))
-			(unsigned char *)pc += (signed char)(*fetch_p);
+			*(unsigned char *)&pc += (signed char)(*fetch_p);
 		    return pc+1; /* skip myself */
 		case relw:
 		    if ((inst = 0x5c) || isbranch((*fetch_p & 0xf0) >> 4))
-			(unsigned char *)pc += (signed short)(*(pc+1));
+			*(unsigned char *)&pc += (signed short)(*(pc+1));
 		    return pc+2; /* skip myself */
 		}
 	    }
